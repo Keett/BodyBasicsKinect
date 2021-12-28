@@ -352,28 +352,22 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
                                 DepthSpacePoint depthSpacePoint = this.coordinateMapper.MapCameraPointToDepthSpace(position);
                                 jointPoints[jointType] = new Point(depthSpacePoint.X, depthSpacePoint.Y);
-                                
-
                             }
+                            #region GerçekZamanlıVerileriAl
+                            //foreach (KeyValuePair<JointType,Point> veri in jointPoints)
+                            //{
+                            //    if(veri.Key == JointType.Head)
+                            //    {
+                            //        Console.WriteLine("Joint Type: {0}  -  Point: {1}: ", veri.Key, veri.Value);
+                            //    }
+                            //    else if (veri.Key == JointType.FootRight)
+                            //    {
+                            //        Console.WriteLine("Joint Type: {0}  -  Point: {1}: ", veri.Key, veri.Value);
+                            //    }
+                            //}
+                            #endregion   
 
-                            /// <summary>
-                            /// Gerçek zamanlı pozisyon konumları
-                            /// </summary>
-                            /// <param name="JointType">Konum Tipi</param>
-                            /// <param name="Point">Konum Pozisyonu (x,y)</param>
-                            /// 
-                            foreach (KeyValuePair<JointType,Point> veri in jointPoints)
-                            {
-                                if(veri.Key == JointType.Head)
-                                {
-                                    Console.WriteLine("Joint Type: {0}  -  Point: {1}: ", veri.Key, veri.Value);
-                                }
-                                else if (veri.Key == JointType.FootRight)
-                                {
-                                    Console.WriteLine("Joint Type: {0}  -  Point: {1}: ", veri.Key, veri.Value);
-                                }
-                            }
-
+                            GetRealTimePosition(jointPoints);
 
                             this.DrawBody(joints, jointPoints, dc, drawPen);
 
@@ -386,6 +380,32 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
                 }
             }
+        }
+
+        /// <summary>
+        /// Gerçek zamanlı pozisyon konumlarını al
+        /// </summary>
+        /// <param name="jointPoints"></param>
+        public void GetRealTimePosition(Dictionary<JointType,Point> jointPoints)
+        {
+            double[] diziHeadValueX = new double[jointPoints.Count];
+            double[] diziHeadValueY = new double[jointPoints.Count];
+            foreach (KeyValuePair<JointType, Point> veri in jointPoints)
+            {
+                if (veri.Key == JointType.Head)
+                {
+                    double XIndex = veri.Value.X;
+                    for (int i = 0; i < diziHeadValueX.Length; i++)
+                    {
+                        diziHeadValueX[i] = veri.Value.X;
+                        diziHeadValueY[i] = veri.Value.Y;
+                    }
+                    for (int i = 0; i < jointPoints.Count; i++)
+                    {
+                        Console.WriteLine("{0} zamanındaki X verisi= {1} --- Y verisi = {2}",i,diziHeadValueX[i],diziHeadValueY[i]);
+                    }
+                }
+            } 
         }
 
         /// <summary>
