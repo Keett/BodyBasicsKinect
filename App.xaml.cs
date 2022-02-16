@@ -10,7 +10,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
     using System.Windows;
 
     /// <summary>
-    /// Interaction logic for App
+    /// Interaction logic for App --- App için etkileşim mantığı 
     /// </summary>
     public partial class App : Application
     {

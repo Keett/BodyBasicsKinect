@@ -9,12 +9,8 @@ namespace Microsoft.Samples.Kinect.BodyBasics
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
     using System.Windows;
     using System.Windows.Media;
-    using System.Windows.Media.Imaging;
     using Microsoft.Kinect;
 
     /// <summary>
@@ -24,61 +20,73 @@ namespace Microsoft.Samples.Kinect.BodyBasics
     {
         /// <summary>
         /// Radius of drawn hand circles
+        /// Çizilen el dairelerinin yarıçapı
         /// </summary>
         private const double HandSize = 30;
 
         /// <summary>
         /// Thickness of drawn joint lines
+        /// Çizilen eklem çizgilerinin kalınlığı
         /// </summary>
         private const double JointThickness = 3;
 
         /// <summary>
         /// Thickness of clip edge rectangles
+        /// Klip kenarı dikdörtgenlerinin kalınlığı
         /// </summary>
         private const double ClipBoundsThickness = 10;
 
         /// <summary>
         /// Constant for clamping Z values of camera space points from being negative
+        /// Kamera alanı noktalarının Z değerlerinin negatif olması için sabittir
         /// </summary>
         private const float InferredZPositionClamp = 0.1f;
 
         /// <summary>
         /// Brush used for drawing hands that are currently tracked as closed
+        /// Kapalı olarak takip edilen elleri çizmek için kullanılan Brush - fırça
         /// </summary>
         private readonly Brush handClosedBrush = new SolidColorBrush(Color.FromArgb(128, 255, 0, 0));
 
         /// <summary>
         /// Brush used for drawing hands that are currently tracked as opened
+        /// Açık olarak takip edilen elleri çizmek için kullanılan Brush
         /// </summary>
         private readonly Brush handOpenBrush = new SolidColorBrush(Color.FromArgb(128, 0, 255, 0));
 
         /// <summary>
         /// Brush used for drawing hands that are currently tracked as in lasso (pointer) position
+        /// Kement (işaretçi) konumunda izlenmekte olan elleri çizmek için kullanılan fırça
         /// </summary>
         private readonly Brush handLassoBrush = new SolidColorBrush(Color.FromArgb(128, 0, 0, 255));
 
         /// <summary>
         /// Brush used for drawing joints that are currently tracked
+        /// İzlenen eklemleri çizmek için kullanılan fırça
         /// </summary>
         private readonly Brush trackedJointBrush = new SolidColorBrush(Color.FromArgb(255, 68, 192, 68));
 
         /// <summary>
         /// Brush used for drawing joints that are currently inferred
+        /// Halihazırda çıkarsanan eklemleri çizmek için kullanılan fırça
         /// </summary>        
         private readonly Brush inferredJointBrush = Brushes.Yellow;
 
         /// <summary>
         /// Pen used for drawing bones that are currently inferred
+        /// Halihazırda çıkarsanan kemikleri çizmek için kullanılan kalem
         /// </summary>        
         private readonly Pen inferredBonePen = new Pen(Brushes.Gray, 1);
 
         /// <summary>
         /// Drawing group for body rendering output
+        /// Vücut işleme çıktısı için çizim grubu
         /// </summary>
         private DrawingGroup drawingGroup;
 
         /// <summary>
         /// Drawing image that we will display
+        /// Görüntüleyeceğimiz çizim görüntüsü
         /// </summary>
         private DrawingImage imageSource;
 
@@ -89,69 +97,84 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         /// <summary>
         /// Coordinate mapper to map one type of point to another
+        /// Bir nokta türünü diğerine eşlemek için koordinat eşleyicisi (coordinate mapper)
         /// </summary>
         private CoordinateMapper coordinateMapper = null;
 
         /// <summary>
         /// Reader for body frames
+        /// Vücut frameleri için okuyucu
         /// </summary>
         private BodyFrameReader bodyFrameReader = null;
 
         /// <summary>
         /// Array for the bodies
+        /// Vücut için dizi
         /// </summary>
         private Body[] bodies = null;
 
         /// <summary>
         /// definition of bones
+        /// kemiklerin tanımı
         /// </summary>
         private List<Tuple<JointType, JointType>> bones;
 
         /// <summary>
         /// Width of display (depth space)
+        /// Ekran genişliği (derinlik alanı)
         /// </summary>
         private int displayWidth;
 
         /// <summary>
         /// Height of display (depth space)
+        /// Ekran yüksekliği (derinlik alanı)
         /// </summary>
         private int displayHeight;
 
         /// <summary>
         /// List of colors for each body tracked
+        /// İzlenen her vücut için renk listesi
         /// </summary>
         private List<Pen> bodyColors;
 
         /// <summary>
         /// Current status text to display
+        /// Görüntülenecek geçerli durum metni
         /// </summary>
         private string statusText = null;
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
+        /// MainWindow sınıfının yeni bir örneğini başlatır.
         /// </summary>
         public MainWindow()
         {
             // one sensor is currently supported
+            // Halihazırda bir sensör desteklemesi
             this.kinectSensor = KinectSensor.GetDefault();
 
             // get the coordinate mapper
+            // Koordinat mapper'ı al 
             this.coordinateMapper = this.kinectSensor.CoordinateMapper;
 
             // get the depth (display) extents
+            // derinlik (ekran) kapsamını elde edin
             FrameDescription frameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
 
             // get size of joint space
+            // ortak alan boyutunu al
             this.displayWidth = frameDescription.Width;
             this.displayHeight = frameDescription.Height;
 
             // open the reader for the body frames
+            // vücut framleri için okuyucuyu aç
             this.bodyFrameReader = this.kinectSensor.BodyFrameSource.OpenReader();
 
             // a bone defined as a line between two joints
+            // iki eklem arasındaki çizgi olarak tanımlanan bir kemik
             this.bones = new List<Tuple<JointType, JointType>>();
 
-            // Torso
+            // Torso -- Gövde
             this.bones.Add(new Tuple<JointType, JointType>(JointType.Head, JointType.Neck));
             this.bones.Add(new Tuple<JointType, JointType>(JointType.Neck, JointType.SpineShoulder));
             this.bones.Add(new Tuple<JointType, JointType>(JointType.SpineShoulder, JointType.SpineMid));
@@ -186,6 +209,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             this.bones.Add(new Tuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft));
 
             // populate body colors, one for each BodyIndex
+            // her BodyIndex için bir tane olmak üzere vücut renklerini doldurma (birden fazla kişi için farklı renkte body çizimi için)
             this.bodyColors = new List<Pen>();
 
             this.bodyColors.Add(new Pen(Brushes.Red, 6));
@@ -195,36 +219,45 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             this.bodyColors.Add(new Pen(Brushes.Indigo, 6));
             this.bodyColors.Add(new Pen(Brushes.Violet, 6));
 
-            // set IsAvailableChanged event notifier
+            // set IsAvailableChanged event notifier -- olay bildiricisi
+            // sensörün kullanılamaz hale geldiği olayı ele alır (duraklatıldı, kapatıldı, fişi çekildiği durumlar)
             this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
 
             // open the sensor
             this.kinectSensor.Open();
 
             // set the status text
+            //Sensor kullanılıp kullanılmadığı durum bilgisi
             this.StatusText = this.kinectSensor.IsAvailable ? Properties.Resources.RunningStatusText
                                                             : Properties.Resources.NoSensorStatusText;
 
             // Create the drawing group we'll use for drawing
+            // Çizim için kullanacağımız çizim grubunu oluşturun
             this.drawingGroup = new DrawingGroup();
 
             // Create an image source that we can use in our image control
+            // Görüntü kontrolümüzde kullanabileceğimiz bir görüntü kaynağı oluşturun
             this.imageSource = new DrawingImage(this.drawingGroup);
 
             // use the window object as the view model in this simple example
+            // bu basit örnekte pencere nesnesini görünüm modeli olarak kullanın
             this.DataContext = this;
 
             // initialize the components (controls) of the window
+            // pencerenin bileşenlerini (kontrollerini) başlat
             this.InitializeComponent();
         }
 
         /// <summary>
         /// INotifyPropertyChangedPropertyChanged event to allow window controls to bind to changeable data
+        /// Pencere denetimlerinin değiştirilebilir verilere bağlanmasına izin vermek için INotifyPropertyChangedPropertyChanged olayı
+        /// InotifyPropertyChanged'den implement edilen event
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
         /// Gets the bitmap to display
+        /// Görüntülenecek bitmap'i alır
         /// </summary>
         public ImageSource ImageSource
         {
@@ -236,6 +269,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         /// <summary>
         /// Gets or sets the current status text to display
+        /// Görüntülenecek geçerli durum metnini alır veya ayarlar
         /// </summary>
         public string StatusText
         {
@@ -251,6 +285,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     this.statusText = value;
 
                     // notify any bound elements that the text has changed
+                    // metnin değiştiği tüm bağlı öğeleri bildir
                     if (this.PropertyChanged != null)
                     {
                         this.PropertyChanged(this, new PropertyChangedEventArgs("StatusText"));
@@ -261,8 +296,9 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         /// <summary>
         /// Execute start up tasks
+        /// Başlatma görevlerini yürütün
         /// </summary>
-        /// <param name="sender">object sending the event</param>
+        /// <param name="sender">object sending the event/ olayı gönderen nesne</param>
         /// <param name="e">event arguments</param>
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -274,6 +310,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         /// <summary>
         /// Execute shutdown tasks
+        /// Kapatma görevlerini yürütün
         /// </summary>
         /// <param name="sender">object sending the event</param>
         /// <param name="e">event arguments</param>
@@ -295,13 +332,17 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         /// <summary>
         /// Handles the body frame data arriving from the sensor
+        /// Sensörden gelen vücut frame verilerini işler
+        /// (BodyFrameArrivedEventArgs e): bir vücut frame'i okuyucusunun FrameArrived olayı için bağımsız değişkenleri temsil eder.
         /// </summary>
         /// <param name="sender">object sending the event</param>
         /// <param name="e">event arguments</param>
         private void Reader_FrameArrived(object sender, BodyFrameArrivedEventArgs e)
         {
-            bool dataReceived = false;
+            bool dataReceived = false; //veri alındı mı?
 
+            // BodyFrame : sensörün görüş alanında olan kişiler hakkında tüm hesaplanmış gerçek zamanlı izleme bilgilerini içeren bir frame'i temsil eder.
+            // AcquireFrame() : Bu referans tarafından tutulan çerçeveyi alır
             using (BodyFrame bodyFrame = e.FrameReference.AcquireFrame())
             {
                 if (bodyFrame != null)
@@ -314,6 +355,9 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     // The first time GetAndRefreshBodyData is called, Kinect will allocate each Body in the array.
                     // As long as those body objects are not disposed and not set to null in the array,
                     // those body objects will be re-used.
+                    // GetAndRefreshBodyData ilk kez çağrıldığında, Kinect dizideki her bir Body'i tahsis edecektir.
+                    // Bu body nesneleri atılmadığı ve dizide null değerine ayarlanmadığı sürece, bu body nesneleri yeniden kullanılacaktır.
+
                     bodyFrame.GetAndRefreshBodyData(this.bodies);
                     dataReceived = true;
                 }
@@ -321,38 +365,56 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
             if (dataReceived)
             {
+                // DrawingContext : Draw, Push ve Pop komutlarını kullanarak görsel içeriği açıklar.
                 using (DrawingContext dc = this.drawingGroup.Open())
                 {
                     // Draw a transparent background to set the render size
+                    // Oluşturma (Render) boyutunu ayarlamak için şeffaf bir arka plan çizin - Arkaplan rengive boyutunu ayarlama
                     dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
 
                     int penIndex = 0;
+                    // Body: Tek vücudu temsil eder
                     foreach (Body body in this.bodies)
                     {
                         Pen drawPen = this.bodyColors[penIndex++];
 
+                        // IsTracked : vücudun takip edilip edilmediğini alır
                         if (body.IsTracked)
                         {
+                            // DrawClippedEdges : hangi kenarların vücut verilerini kırptığını göstermek için göstergeler çizer
                             this.DrawClippedEdges(body, dc);
 
                             IReadOnlyDictionary<JointType, Joint> joints = body.Joints;
-
                             // convert the joint points to depth (display) space
+                            // eklem noktalarını derinlik (görüntü) alanına dönüştür
+
                             Dictionary<JointType, Point> jointPoints = new Dictionary<JointType, Point>();
 
+                            // Bütün jointType larda gez, kamera pozisyonlarını al, pozisyon Z sabitiyle çarp,  jointPoints[ilgili jointType] = yeni pozisyon değerlerini ata.
+                            // JointType kadar döner ve yenilenir.
                             foreach (JointType jointType in joints.Keys)
                             {
                                 // sometimes the depth(Z) of an inferred joint may show as negative
-                                // clamp down to 0.1f to prevent coordinatemapper from returning (-Infinity, -Infinity)
+                                // clamp down to 0.1f to prevent coordinate mapper from returning (-Infinity, -Infinity)
+                                // bazen çıkarsanan bir eklemin derinliği(Z) negatif olarak gösterilebilir
+                                // Koordinat mapper dönüşüne engel olmak için 0,1f'ye kadar sıkıştırın (-sonsuz, -sonsuz)
+
                                 CameraSpacePoint position = joints[jointType].Position;
+                                // CameraSpacePoint : Kamera alanında 3 boyutlu bir noktayı temsil eder. Koordinat sisteminin başlangıç ​​noktası (0,0,0) kamera konumudur.
+                                // position : Eklemin kamera boşluğundaki konumu. (Kamera Konum)
+
                                 if (position.Z < 0)
                                 {
                                     position.Z = InferredZPositionClamp;
                                 }
 
                                 DepthSpacePoint depthSpacePoint = this.coordinateMapper.MapCameraPointToDepthSpace(position);
+                                // DepthSpacePoint : derinlik uzayında bir 2d noktayı temsil eder
+                                // MapCameraPointToDepthSpace : bir noktayı kamera uzayından derinlik uzayına eşler.(Gerçek Konum)
+
                                 jointPoints[jointType] = new Point(depthSpacePoint.X, depthSpacePoint.Y);
                             }
+
                             #region GerçekZamanlıVerileriAl
                             //foreach (KeyValuePair<JointType,Point> veri in jointPoints)
                             //{
@@ -367,7 +429,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                             //}
                             #endregion   
 
-                            GetRealTimePosition(jointPoints);
+                            //GetRealTimePosition(jointPoints);
 
                             this.DrawBody(joints, jointPoints, dc, drawPen);
 
@@ -377,6 +439,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                     }
 
                     // prevent drawing outside of our render area
+                    // i̇şleme (render) alanımızın dışına çizilmeyi önleme
                     this.drawingGroup.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, this.displayWidth, this.displayHeight));
                 }
             }
@@ -395,7 +458,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                 if (veri.Key == JointType.Head)
                 {
                     double XIndex = veri.Value.X;
-                    for (int i = 0; i < diziHeadValueX.Length; i++)
+                    for (int i = 0; i < jointPoints.Count; i++)
                     {
                         diziHeadValueX[i] = veri.Value.X;
                         diziHeadValueY[i] = veri.Value.Y;
@@ -428,13 +491,14 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             {
                 Brush drawBrush = null;
 
+                // TrackingState : bir body'nin veya body'nin özniteliğinin izlenme durumunu belirtir.
                 TrackingState trackingState = joints[jointType].TrackingState;
 
-                if (trackingState == TrackingState.Tracked)
+                if (trackingState == TrackingState.Tracked) // izlenen
                 {
                     drawBrush = this.trackedJointBrush;
                 }
-                else if (trackingState == TrackingState.Inferred)
+                else if (trackingState == TrackingState.Inferred) // çıkarsanan
                 {
                     drawBrush = this.inferredJointBrush;
                 }
@@ -468,6 +532,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             }
 
             // We assume all drawn bones are inferred unless BOTH joints are tracked
+            // BOTH (Her iki eklem) eklemleri izlenmediği sürece tüm çizilmiş kemiklerin çıkarıldığını varsayıyoruz.
             Pen drawPen = this.inferredBonePen;
             if ((joint0.TrackingState == TrackingState.Tracked) && (joint1.TrackingState == TrackingState.Tracked))
             {
@@ -503,6 +568,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         /// <summary>
         /// Draws indicators to show which edges are clipping body data
+        /// Hangi kenarların gövde verilerini kırptığını göstermek için göstergeler çizer
         /// </summary>
         /// <param name="body">body to draw clipping information for</param>
         /// <param name="drawingContext">drawing context to draw to</param>
@@ -545,6 +611,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
 
         /// <summary>
         /// Handles the event which the sensor becomes unavailable (E.g. paused, closed, unplugged).
+        /// Sensörün kullanılamaması durumunu ele alır (Örn. duraklatıldı, kapatıldı, fişe takılı değil).
         /// </summary>
         /// <param name="sender">object sending the event</param>
         /// <param name="e">event arguments</param>
