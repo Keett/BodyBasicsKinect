@@ -490,12 +490,20 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             }
             GetKinematik();
         }
+
         public void GetKinematik()
         {
             double ankleLeftAngle = getAngle(kneeLeftPoint, hipLeftPoint, ankleLeftPoint);
-            Console.WriteLine(ankleLeftAngle);
+            Console.WriteLine("Ankle Left Angle : {0}",ankleLeftAngle);
         }
 
+        /// <summary>
+        /// Üç noktası bilinen koordinatların açısal değerini bulan fonksiyon
+        /// </summary>
+        /// <param name="startPoint">Başlangıç noktası aynı zamanda açısı bulunacak eklem</param>
+        /// <param name="secondPoint">Başlangıç noktasına bağlı diğer eklem</param>
+        /// <param name="thirdPoint">Başlangıç noktasına bağlı diğer eklem</param>
+        /// <returns></returns>
         double getAngle(Point startPoint, Point secondPoint, Point thirdPoint)
         {
             Point startToSecondPoint = GetPointToVector(startPoint, secondPoint);
@@ -505,6 +513,20 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             return skalerCarpim / vectorLength * 180 / Math.PI;
         }
 
+        /// <summary>
+        /// Vücut üye (segment) açı hesaplaması
+        /// </summary>
+        /// <param name="startPoint">Başlangıç koordinatı</param>
+        /// <param name="lastPoint">Bitiş Koordinatı</param>
+        /// <returns></returns>
+        double Slope(Point startPoint, Point lastPoint) => Math.Atan((lastPoint.Y - startPoint.Y) / (lastPoint.X - startPoint.X));
+
+        /// <summary>
+        /// İki noktayı tek vektör noktasına çeviren fonksiyon
+        /// </summary>
+        /// <param name="startPoint"></param>
+        /// <param name="lastPoint"></param>
+        /// <returns>Vectör cinsinden Point türünde koordinat verisi</returns>
         public Point GetPointToVector(Point startPoint, Point lastPoint)
         {
             Point result = new Point();
@@ -513,16 +535,21 @@ namespace Microsoft.Samples.Kinect.BodyBasics
             return result;
         }
 
-        double DotProduct(Point startPoint, Point lastPoint)
-        {
-            return (startPoint.X) * (lastPoint.X) + (startPoint.Y) * lastPoint.Y;
-        }
+        /// <summary>
+        /// İki vektörün skaler çarpım hesaplaması
+        /// </summary>
+        /// <param name="startPoint"></param>
+        /// <param name="lastPoint"></param>
+        /// <returns></returns>
+        double DotProduct(Point startPoint, Point lastPoint) => (startPoint.X) * (lastPoint.X) + (startPoint.Y) * lastPoint.Y;
 
-        double VectorLength(Point point)
-        {
-            return Math.Sqrt(Math.Pow(point.X, 2) + Math.Pow(point.Y, 2));
-        }
-
+        /// <summary>
+        /// Koordinatı bilinen vektörün uzunluğu
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
+        double VectorLength(Point point) => Math.Sqrt(Math.Pow(point.X, 2) + Math.Pow(point.Y, 2));
+        
         /// <summary>
         /// Draws a body
         /// </summary>
