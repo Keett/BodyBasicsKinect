@@ -137,6 +137,14 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// </summary>
         private List<Pen> bodyColors;
 
+
+        private Point kneeLeftPoint = new Point();
+        private Point hipLeftPoint = new Point();
+        private Point ankleLeftPoint = new Point();
+        private Point neckPoint = new Point();
+        private Point headPoint = new Point();
+
+
         /// <summary>
         /// Current status text to display
         /// Görüntülenecek geçerli durum metni
@@ -415,21 +423,7 @@ namespace Microsoft.Samples.Kinect.BodyBasics
                                 jointPoints[jointType] = new Point(depthSpacePoint.X, depthSpacePoint.Y);
                             }
 
-                            #region GerçekZamanlıVerileriAl
-                            //foreach (KeyValuePair<JointType,Point> veri in jointPoints)
-                            //{
-                            //    if(veri.Key == JointType.Head)
-                            //    {
-                            //        Console.WriteLine("Joint Type: {0}  -  Point: {1}: ", veri.Key, veri.Value);
-                            //    }
-                            //    else if (veri.Key == JointType.FootRight)
-                            //    {
-                            //        Console.WriteLine("Joint Type: {0}  -  Point: {1}: ", veri.Key, veri.Value);
-                            //    }
-                            //}
-                            #endregion   
-
-                            //GetRealTimePosition(jointPoints);
+                            SetRealTimePosition(jointPoints);
 
                             this.DrawBody(joints, jointPoints, dc, drawPen);
 
@@ -449,26 +443,84 @@ namespace Microsoft.Samples.Kinect.BodyBasics
         /// Gerçek zamanlı pozisyon konumlarını al
         /// </summary>
         /// <param name="jointPoints"></param>
-        public void GetRealTimePosition(Dictionary<JointType,Point> jointPoints)
+        public void SetRealTimePosition(Dictionary<JointType,Point> jointPoints)
         {
-            double[] diziHeadValueX = new double[jointPoints.Count];
-            double[] diziHeadValueY = new double[jointPoints.Count];
             foreach (KeyValuePair<JointType, Point> veri in jointPoints)
             {
-                if (veri.Key == JointType.Head)
+                switch (veri.Key)
                 {
-                    double XIndex = veri.Value.X;
-                    for (int i = 0; i < jointPoints.Count; i++)
-                    {
-                        diziHeadValueX[i] = veri.Value.X;
-                        diziHeadValueY[i] = veri.Value.Y;
-                    }
-                    for (int i = 0; i < jointPoints.Count; i++)
-                    {
-                        Console.WriteLine("{0} zamanındaki X verisi= {1} --- Y verisi = {2}",i,diziHeadValueX[i],diziHeadValueY[i]);
-                    }
+                    case JointType.Neck:
+                        break;
+                    case JointType.Head:
+                        break;
+                    case JointType.ShoulderLeft:
+                        break;
+                    case JointType.ElbowLeft:
+                        break;
+                    case JointType.WristLeft:
+                        break;
+                    case JointType.ShoulderRight:
+                        break;
+                    case JointType.ElbowRight:
+                        break;
+                    case JointType.WristRight:
+                        break;
+                    case JointType.HipLeft:
+                        hipLeftPoint = veri.Value;
+                        break;
+                    case JointType.KneeLeft:
+                        kneeLeftPoint = veri.Value;
+                        break;
+                    case JointType.AnkleLeft:
+                        ankleLeftPoint = veri.Value;
+                        break;
+                    case JointType.FootLeft:
+                        break;
+                    case JointType.HipRight:
+                        break;
+                    case JointType.KneeRight:
+                        break;
+                    case JointType.AnkleRight:
+                        break;
+                    case JointType.FootRight:
+                        break;
+                    default:
+                        break;
                 }
-            } 
+            }
+            GetKinematik();
+        }
+        public void GetKinematik()
+        {
+            double ankleLeftAngle = getAngle(kneeLeftPoint, hipLeftPoint, ankleLeftPoint);
+            Console.WriteLine(ankleLeftAngle);
+        }
+
+        double getAngle(Point startPoint, Point secondPoint, Point thirdPoint)
+        {
+            Point startToSecondPoint = GetPointToVector(startPoint, secondPoint);
+            Point startToThirdPoint = GetPointToVector(startPoint, thirdPoint);
+            double skalerCarpim = DotProduct(startToSecondPoint, startToThirdPoint);
+            double vectorLength = VectorLength(startToSecondPoint) * VectorLength(startToThirdPoint);
+            return skalerCarpim / vectorLength * 180 / Math.PI;
+        }
+
+        public Point GetPointToVector(Point startPoint, Point lastPoint)
+        {
+            Point result = new Point();
+            result.X = lastPoint.X - startPoint.X;
+            result.Y = lastPoint.Y - startPoint.Y;
+            return result;
+        }
+
+        double DotProduct(Point startPoint, Point lastPoint)
+        {
+            return (startPoint.X) * (lastPoint.X) + (startPoint.Y) * lastPoint.Y;
+        }
+
+        double VectorLength(Point point)
+        {
+            return Math.Sqrt(Math.Pow(point.X, 2) + Math.Pow(point.Y, 2));
         }
 
         /// <summary>
